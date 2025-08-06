@@ -1,66 +1,61 @@
 // This is a placeholder for your contract ABIs.
 // Replace with your actual contract ABIs.
 
-export const TOKEN_SWAP_ABI = [
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "tokenIn",
-        "type": "address"
-      },
-      {
-        "name": "tokenOut",
-        "type": "address"
-      },
-      {
-        "name": "amountIn",
-        "type": "uint256"
-      }
-    ],
-    "name": "swap",
-    "outputs": [
-      {
-        "name": "amountOut",
-        "type": "uint256"
-      }
-    ],
-    "payable": true,
-    "stateMutability": "payable",
-    "type": "function"
-  }
-];
-
-export const STAKING_ABI = [
+export const ChainExABIs = {
+  dexAbi: [
     {
-        "constant": false,
-        "inputs": [
-          {
-            "name": "amount",
-            "type": "uint256"
-          }
-        ],
-        "name": "stake",
-        "outputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-      }
-];
-
-export const MEMBERSHIP_ABI = [
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
     {
-        "constant": false,
-        "inputs": [
-          {
-            "name": "tierId",
-            "type": "uint256"
-          }
-        ],
-        "name": "purchaseMembership",
-        "outputs": [],
-        "payable": true,
-        "stateMutability": "payable",
-        "type": "function"
-      }
-]
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        }
+      ],
+      "name": "swapExactETHForTokens",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "stateMutability": "payable",
+      "type": "receive"
+    }
+  ],
+  stakingAbi: [
+      {
+          "constant": false,
+          "inputs": [
+            {
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "stake",
+          "outputs": [],
+          "payable": false,
+          "stateMutability": "nonpayable",
+          "type": "function"
+        }
+  ],
+  membershipAbi: [
+      {
+          "constant": false,
+          "inputs": [
+            {
+              "name": "tierId",
+              "type": "uint256"
+            }
+          ],
+          "name": "purchaseMembership",
+          "outputs": [],
+          "payable": true,
+          "stateMutability": "payable",
+          "type": "function"
+        }
+  ]
+}

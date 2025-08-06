@@ -1,110 +1,84 @@
-'use client';
+'use client'
 
-import * as React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react'
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { parseEther } from 'viem'
+import { ChainExContracts } from '@/constants/addresses'
+import { ChainExABIs } from '@/constants/abis'
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowDown } from 'lucide-react';
-
-const tokens = [
-  { id: 'eth', name: 'Ethereum', symbol: 'ETH' },
-  { id: 'dai', name: 'Dai', symbol: 'DAI' },
-  { id: 'usdc', name: 'USD Coin', symbol: 'USDC' },
-];
+import { Loader2 } from 'lucide-react';
 
 export function TokenSwap() {
-  const [fromAmount, setFromAmount] = React.useState('');
-  const [toAmount, setToAmount] = React.useState('');
-  const [fromToken, setFromToken] = React.useState(tokens[0].id);
-  const [toToken, setToToken] = React.useState(tokens[1].id);
+  const [amount, setAmount] = useState('')
+  const [hash, setHash] = useState<`0x${string}` | undefined>(undefined)
 
-  const handleSwap = () => {
-    // Placeholder for swap logic
-    console.log(`Swapping ${fromAmount} ${fromToken} for ${toAmount} ${toToken}`);
-  };
-  
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const amount = e.target.value;
-    setFromAmount(amount);
-    // Dummy conversion
-    setToAmount(amount ? String(parseFloat(amount) * 1800) : '');
-  };
+  const { isConnected, address } = useAccount()
+  const { writeContract, isPending } = useWriteContract()
+
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash,
+  })
+
+  const handleSwap = async () => {
+    if (!amount) return;
+    try {
+      writeContract({
+        address: ChainExContracts.dex as `0x${string}`,
+        abi: ChainExABIs.dexAbi,
+        functionName: 'swapExactETHForTokens',
+        value: parseEther(amount),
+        args: [address], // recipient
+      }, {
+        onSuccess: (hash) => setHash(hash),
+        onError: (error) => {
+          console.error('Swap failed:', error)
+        }
+      })
+    } catch (err) {
+      console.error('Swap failed:', err)
+    }
+  }
 
   return (
-    <Card className="w-full max-w-md shadow-2xl shadow-primary/10">
+    <Card className="w-full max-w-md shadow-2xl shadow-primary/10 mx-auto">
       <CardHeader>
-        <CardTitle>Token Swap</CardTitle>
-        <CardDescription>Instantly swap between cryptocurrencies.</CardDescription>
+        <CardTitle>Swap ETH for Tokens</CardTitle>
+        <CardDescription>Enter the amount of ETH you want to swap.</CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="grid gap-2 p-4 border rounded-lg bg-background">
-            <Label htmlFor="from-token" className="text-muted-foreground">From</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                id="from-token"
-                type="number"
-                placeholder="0.0"
-                value={fromAmount}
-                onChange={handleAmountChange}
-                className="text-2xl border-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto"
-              />
-              <Select value={fromToken} onValueChange={setFromToken}>
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue placeholder="Token" />
-                </SelectTrigger>
-                <SelectContent>
-                  {tokens.map((token) => (
-                    <SelectItem key={token.id} value={token.id}>
-                      {token.symbol}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-             <p className="text-xs text-muted-foreground">Balance: 1.234 {tokens.find(t => t.id === fromToken)?.symbol}</p>
-          </div>
-          
-          <div className="flex justify-center -my-3 z-10">
-            <Button variant="outline" size="icon" className="rounded-full bg-background hover:bg-muted">
-                <ArrowDown className="h-4 w-4" />
-            </Button>
-          </div>
-
-          <div className="grid gap-2 p-4 border rounded-lg bg-background">
-            <Label htmlFor="to-token" className="text-muted-foreground">To</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                id="to-token"
-                type="number"
-                placeholder="0.0"
-                value={toAmount}
-                readOnly
-                className="text-2xl border-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto"
-              />
-              <Select value={toToken} onValueChange={setToToken}>
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue placeholder="Token" />
-                </SelectTrigger>
-                <SelectContent>
-                  {tokens.map((token) => (
-                    <SelectItem key={token.id} value={token.id}>
-                      {token.symbol}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <p className="text-xs text-muted-foreground">Balance: 12,500.00 {tokens.find(t => t.id === toToken)?.symbol}</p>
-          </div>
-          
-          <Button onClick={handleSwap} className="w-full text-lg py-6" size="lg">
-            Swap Tokens
-          </Button>
+      <CardContent className="space-y-4">
+        <div>
+          <Label htmlFor="amount" className="block mb-2 font-medium">Amount in ETH:</Label>
+          <Input
+            id="amount"
+            type="number"
+            placeholder="e.g. 0.01"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+          />
         </div>
+
+        <Button
+          onClick={handleSwap}
+          disabled={!isConnected || isPending || isConfirming || !amount}
+          className="w-full"
+        >
+          {isPending || isConfirming ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Swapping...
+            </>
+          ) : 'Swap ETH → Token'}
+        </Button>
+
+        {isConfirmed && (
+          <p className="mt-4 text-green-600 font-medium">
+            ✅ Swap confirmed! TX: {hash?.slice(0, 10)}...
+          </p>
+        )}
       </CardContent>
     </Card>
-  );
+  )
 }

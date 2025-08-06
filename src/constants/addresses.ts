@@ -1,8 +1,10 @@
 // This is a placeholder for your contract addresses.
 // Replace with your actual contract addresses.
-export const TOKEN_SWAP_ADDRESS = '0x0000000000000000000000000000000000000000';
-export const STAKING_ADDRESS = '0x0000000000000000000000000000000000000000';
-export const MEMBERSHIP_ADDRESS = '0x0000000000000000000000000000000000000000';
+export const ChainExContracts = {
+  dex: '0x9b5da08D0fb63820C722E36458Bf5E42a7D33a8C',
+  staking: '0x0000000000000000000000000000000000000000',
+  membership: '0x0000000000000000000000000000000000000000',
+};
 
 export const MOCK_TOKEN_ADDRESSES = {
   ETH: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
