@@ -9,8 +9,8 @@ import type {
   AnalyzeOptimalStakeOutput,
 } from '@/ai/flows/optimal-stake-analyzer';
 import { getOptimalStake } from '@/app/actions';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { parseEther } from 'viem';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
+import { parseEther, formatEther } from 'viem';
 import { ChainExContracts } from '@/constants/addresses';
 import { ChainExABIs } from '@/constants/abis';
 import {
@@ -44,6 +44,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Lightbulb, Loader2 } from 'lucide-react';
 import { Slider } from './ui/slider';
 import { Badge } from './ui/badge';
+import { useToast } from '@/hooks/use-toast';
 
 const analyzerFormSchema = z.object({
   amount: z.coerce.number().positive({ message: 'Amount must be positive' }),
@@ -53,6 +54,209 @@ const analyzerFormSchema = z.object({
     .min(10, { message: 'Please provide more details on block activity.' }),
 });
 
+const stakeFormSchema = z.object({
+  amount: z.coerce.number().positive('Amount must be a positive number.'),
+});
+
+const unstakeFormSchema = z.object({
+  amount: z.coerce.number().positive('Amount must be a positive number.'),
+});
+
+function StakingStatus() {
+  const { address } = useAccount();
+
+  const { data: stakedBalance, isLoading: isLoadingStaked } = useReadContract({
+    address: ChainExContracts.staking as `0x${string}`,
+    abi: ChainExABIs.stakingAbi,
+    functionName: 'staked',
+    args: [address],
+    query: {
+      enabled: !!address,
+    }
+  });
+
+  const { data: rewards, isLoading: isLoadingRewards } = useReadContract({
+    address: ChainExContracts.staking as `0x${string}`,
+    abi: ChainExABIs.stakingAbi,
+    functionName: 'rewards',
+    args: [address],
+    query: {
+      enabled: !!address,
+    }
+  });
+
+  return (
+    <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+      <div className="flex justify-between items-center">
+        <p className="text-sm text-muted-foreground">Staked Balance</p>
+        <p className="font-bold">{isLoadingStaked ? '...' : `${stakedBalance ? formatEther(stakedBalance as bigint) : '0'} CEX`}</p>
+      </div>
+       <div className="flex justify-between items-center">
+        <p className="text-sm text-muted-foreground">Pending Rewards</p>
+        <p className="font-bold text-green-600">{isLoadingRewards ? '...' : `${rewards ? formatEther(rewards as bigint) : '0'} CEX`}</p>
+      </div>
+    </div>
+  )
+}
+
+function StakeForm() {
+  const { toast } = useToast();
+  const { data: hash, writeContract, isPending } = useWriteContract({
+    mutation: {
+      onSuccess: (hash) => {
+        toast({
+          title: 'Stake Submitted',
+          description: `Transaction hash: ${hash.slice(0,10)}...`
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: 'Error',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
+    }
+  });
+
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
+
+  const form = useForm<z.infer<typeof stakeFormSchema>>({
+    resolver: zodResolver(stakeFormSchema),
+    defaultValues: { amount: 0 },
+  });
+
+  function onSubmit(values: z.infer<typeof stakeFormSchema>) {
+    writeContract({
+      address: ChainExContracts.staking as `0x${string}`,
+      abi: ChainExABIs.stakingAbi,
+      functionName: 'stake',
+      args: [parseEther(values.amount.toString())],
+    });
+  }
+
+  return (
+     <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="amount"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Amount to Stake</FormLabel>
+              <FormControl>
+                <Input type="number" placeholder="e.g. 100" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit" disabled={isPending || isConfirming} className="w-full">
+          {isPending || isConfirming ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Staking...</> : 'Stake'}
+        </Button>
+      </form>
+     </Form>
+  )
+}
+
+function UnstakeForm() {
+  const { toast } = useToast();
+  const { data: hash, writeContract, isPending } = useWriteContract({
+     mutation: {
+      onSuccess: (hash) => {
+        toast({
+          title: 'Unstake Submitted',
+          description: `Transaction hash: ${hash.slice(0,10)}...`
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: 'Error',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
+    }
+  });
+
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
+
+  const form = useForm<z.infer<typeof unstakeFormSchema>>({
+    resolver: zodResolver(unstakeFormSchema),
+    defaultValues: { amount: 0 },
+  });
+
+  function onSubmit(values: z.infer<typeof unstakeFormSchema>) {
+    writeContract({
+      address: ChainExContracts.staking as `0x${string}`,
+      abi: ChainExABIs.stakingAbi,
+      functionName: 'unstake',
+      args: [parseEther(values.amount.toString())],
+    });
+  }
+
+  return (
+     <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="amount"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Amount to Unstake</FormLabel>
+              <FormControl>
+                <Input type="number" placeholder="e.g. 100" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit" variant="outline" disabled={isPending || isConfirming} className="w-full">
+          {isPending || isConfirming ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Unstaking...</> : 'Unstake'}
+        </Button>
+      </form>
+     </Form>
+  )
+}
+
+function ClaimRewardsButton() {
+  const { toast } = useToast();
+  const { data: hash, writeContract, isPending } = useWriteContract({
+     mutation: {
+      onSuccess: (hash) => {
+        toast({
+          title: 'Claim Submitted',
+          description: `Transaction hash: ${hash.slice(0,10)}...`
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: 'Error',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
+    }
+  });
+
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
+
+  const handleClaim = () => {
+    writeContract({
+      address: ChainExContracts.staking as `0x${string}`,
+      abi: ChainExABIs.stakingAbi,
+      functionName: 'claimRewards',
+    });
+  };
+
+  return (
+    <Button onClick={handleClaim} disabled={isPending || isConfirming} className="w-full">
+      {isPending || isConfirming ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Claiming...</> : 'Claim Rewards'}
+    </Button>
+  );
+}
+
+
 export function StakePanel() {
   const [stakeAmount, setStakeAmount] = React.useState(50);
   const [aiResult, setAiResult] =
@@ -61,9 +265,6 @@ export function StakePanel() {
   const [error, setError] = React.useState<string | null>(null);
 
   const { isConnected } = useAccount();
-  const { data: hash, writeContract, isPending } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess: isConfirmed } =
-    useWaitForTransactionReceipt({ hash });
 
   const form = useForm<z.infer<typeof analyzerFormSchema>>({
     resolver: zodResolver(analyzerFormSchema),
@@ -91,21 +292,6 @@ export function StakePanel() {
     }
   };
 
-  const handleStake = async () => {
-    if (!stakeAmount) return;
-    try {
-      writeContract({
-        address: ChainExContracts.staking as `0x${string}`,
-        abi: ChainExABIs.stakingAbi,
-        functionName: 'stake',
-        args: [parseEther(stakeAmount.toString())],
-      });
-    } catch (err) {
-      console.error('Staking failed:', err);
-      // You might want to set an error state here to show in the UI
-    }
-  };
-
 
   React.useEffect(() => {
     if (aiResult?.suggestedStakeAmount) {
@@ -118,7 +304,7 @@ export function StakePanel() {
   }, [aiResult]);
 
   return (
-    <Card className="shadow-2xl shadow-primary/10">
+    <Card className="shadow-2xl shadow-primary/10 w-full max-w-2xl">
       <CardHeader>
         <CardTitle>Staking</CardTitle>
         <CardDescription>
@@ -132,8 +318,18 @@ export function StakePanel() {
             <TabsTrigger value="analyzer">AI Analyzer</TabsTrigger>
           </TabsList>
           <TabsContent value="stake" className="pt-4">
-            <div className="space-y-6">
-              <div className="p-6 border rounded-lg space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <StakingStatus />
+                <StakeForm />
+                <UnstakeForm />
+                <ClaimRewardsButton />
+              </div>
+              <div className="p-6 border rounded-lg space-y-4 flex flex-col justify-center">
+                 <div className="space-y-2">
+                    <h3 className="font-semibold text-lg">Manual Stake</h3>
+                    <p className="text-sm text-muted-foreground">Use the slider to manually select an amount to stake.</p>
+                 </div>
                 <div className="flex justify-between items-baseline">
                   <Label htmlFor="stake-amount" className="text-lg">Amount to Stake</Label>
                   <span className="text-2xl font-bold text-primary">{stakeAmount.toLocaleString()}</span>
@@ -150,32 +346,10 @@ export function StakePanel() {
                   <span>0</span>
                   <span>10,000</span>
                 </div>
+                 <Button size="lg" className="w-full text-lg py-6" disabled={!isConnected}>
+                    Stake Manually
+                  </Button>
               </div>
-              <div className="flex justify-between items-center bg-muted/50 p-4 rounded-lg">
-                <div className="text-sm">
-                  <p className="text-muted-foreground">Available to stake</p>
-                  <p className="font-bold">15,000.00 TOK</p>
-                </div>
-                 <div className="text-sm text-right">
-                  <p className="text-muted-foreground">Current APY</p>
-                  <p className="font-bold text-green-600">~12.5%</p>
-                </div>
-              </div>
-              <Button size="lg" className="w-full text-lg py-6" onClick={handleStake} disabled={!isConnected || isPending || isConfirming || stakeAmount === 0}>
-                {isPending || isConfirming ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Staking...
-                  </>
-                ) : (
-                  'Stake Now'
-                )}
-              </Button>
-               {isConfirmed && (
-                <p className="mt-4 text-green-600 font-medium text-center">
-                  ✅ Staking confirmed! TX: {hash?.slice(0, 10)}...
-                </p>
-              )}
             </div>
           </TabsContent>
           <TabsContent value="analyzer" className="pt-4">
