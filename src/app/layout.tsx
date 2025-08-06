@@ -1,14 +1,14 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Providers } from './providers';
-import { Navbar } from '@/components/Navbar';
-import { Toaster } from '@/components/ui/toaster';
-import { cn } from '@/lib/utils';
+import { Header } from '~/components/Header';
+import { Toaster } from '~/components/ui/toaster';
+import { cn } from '~/lib/utils';
 import '@rainbow-me/rainbowkit/styles.css';
 
 export const metadata: Metadata = {
-  title: 'ChainEx Frontend',
-  description: 'A clean, modern UI/UX for ChainEx.',
+  title: 'ChainEx DEX',
+  description: 'Swap, stake, and earn on ChainEx.',
 };
 
 export default function RootLayout({
@@ -26,14 +26,14 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         ></link>
       </head>
-      <body className={cn('font-body antialiased min-h-screen')}>
+      <body className={cn('font-sans antialiased min-h-screen bg-background')}>
         <Providers>
           <div className="relative flex min-h-screen flex-col">
-            <Navbar />
+            <Header />
             <main className="flex-1">{children}</main>
           </div>
           <Toaster />
