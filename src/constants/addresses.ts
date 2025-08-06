@@ -2,7 +2,7 @@
 // Replace with your actual contract addresses.
 export const ChainExContracts = {
   dex: '0x9b5da08D0fb63820C722E36458Bf5E42a7D33a8C',
-  staking: '0x0000000000000000000000000000000000000000',
+  staking: '0x44ac0A3df0D1a993eEBf847cd35db400beFd03Af',
   membership: '0x0000000000000000000000000000000000000000',
 };
 

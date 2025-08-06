@@ -9,6 +9,10 @@ import type {
   AnalyzeOptimalStakeOutput,
 } from '@/ai/flows/optimal-stake-analyzer';
 import { getOptimalStake } from '@/app/actions';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { parseEther } from 'viem';
+import { ChainExContracts } from '@/constants/addresses';
+import { ChainExABIs } from '@/constants/abis';
 import {
   Card,
   CardContent,
@@ -56,6 +60,11 @@ export function StakePanel() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
+  const { isConnected } = useAccount();
+  const { data: hash, writeContract, isPending } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+    useWaitForTransactionReceipt({ hash });
+
   const form = useForm<z.infer<typeof analyzerFormSchema>>({
     resolver: zodResolver(analyzerFormSchema),
     defaultValues: {
@@ -82,9 +91,29 @@ export function StakePanel() {
     }
   };
 
+  const handleStake = async () => {
+    if (!stakeAmount) return;
+    try {
+      writeContract({
+        address: ChainExContracts.staking as `0x${string}`,
+        abi: ChainExABIs.stakingAbi,
+        functionName: 'stake',
+        args: [parseEther(stakeAmount.toString())],
+      });
+    } catch (err) {
+      console.error('Staking failed:', err);
+      // You might want to set an error state here to show in the UI
+    }
+  };
+
+
   React.useEffect(() => {
     if (aiResult?.suggestedStakeAmount) {
-      setStakeAmount(aiResult.suggestedStakeAmount);
+      // Convert the stake amount to a number before setting it.
+      const suggestedAmount = Number(aiResult.suggestedStakeAmount);
+      if (!isNaN(suggestedAmount)) {
+        setStakeAmount(suggestedAmount);
+      }
     }
   }, [aiResult]);
 
@@ -132,9 +161,21 @@ export function StakePanel() {
                   <p className="font-bold text-green-600">~12.5%</p>
                 </div>
               </div>
-              <Button size="lg" className="w-full text-lg py-6">
-                Stake Now
+              <Button size="lg" className="w-full text-lg py-6" onClick={handleStake} disabled={!isConnected || isPending || isConfirming || stakeAmount === 0}>
+                {isPending || isConfirming ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Staking...
+                  </>
+                ) : (
+                  'Stake Now'
+                )}
               </Button>
+               {isConfirmed && (
+                <p className="mt-4 text-green-600 font-medium text-center">
+                  ✅ Staking confirmed! TX: {hash?.slice(0, 10)}...
+                </p>
+              )}
             </div>
           </TabsContent>
           <TabsContent value="analyzer" className="pt-4">
