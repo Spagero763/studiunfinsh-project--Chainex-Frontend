@@ -13,10 +13,9 @@ import { Loader2 } from 'lucide-react';
 
 export function TokenSwap() {
   const [amount, setAmount] = useState('');
-  const [hash, setHash] = useState<`0x${string}` | undefined>(undefined);
+  const { data: hash, writeContract, isPending } = useWriteContract();
 
   const { isConnected, address } = useAccount();
-  const { writeContract, isPending } = useWriteContract();
 
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
@@ -24,25 +23,15 @@ export function TokenSwap() {
 
   const handleSwap = async () => {
     if (!amount) return;
-    try {
-      writeContract(
-        {
-          address: ChainExContracts.dex as `0x${string}`,
-          abi: ChainExABIs.dexAbi,
-          functionName: 'swapExactETHForTokens',
-          value: parseEther(amount),
-          args: [address], // recipient
-        },
-        {
-          onSuccess: (hash) => setHash(hash),
-          onError: (error) => {
-            console.error('Swap failed:', error);
-          },
-        }
-      );
-    } catch (err) {
-      console.error('Swap failed:', err);
-    }
+    writeContract(
+      {
+        address: ChainExContracts.dex as `0x${string}`,
+        abi: ChainExABIs.dexAbi,
+        functionName: 'swapExactETHForTokens',
+        value: parseEther(amount),
+        args: [address], // recipient
+      }
+    );
   };
 
   return (
@@ -83,6 +72,11 @@ export function TokenSwap() {
         {isConfirmed && (
           <p className="mt-4 text-green-600 font-medium">
             ✅ Swap confirmed! TX: {hash?.slice(0, 10)}...
+          </p>
+        )}
+        {hash && !isConfirmed && !isConfirming && (
+           <p className="mt-4 text-blue-600 font-medium">
+            Transaction sent! TX: {hash?.slice(0,10)}...
           </p>
         )}
       </CardContent>

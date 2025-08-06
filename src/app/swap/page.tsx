@@ -1,3 +1,5 @@
+'use client';
+
 import { TokenSwap } from '@/components/TokenSwap';
 
 export default function SwapPage() {
