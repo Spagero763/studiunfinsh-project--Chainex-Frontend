@@ -17,6 +17,9 @@ export default function Header() {
           <Link href="/swap" className="hover:text-gray-300">
             Swap
           </Link>
+           <Link href="/liquidity" className="hover:text-gray-300">
+            Liquidity
+          </Link>
           <Link href="/stake" className="hover:text-gray-300">
             Staking
           </Link>
