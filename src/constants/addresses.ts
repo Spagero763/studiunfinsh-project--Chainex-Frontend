@@ -7,8 +7,10 @@ export const ChainExContracts = {
   cexToken: '0x3a169ca7aA372f9D28CEd710D182468960b9C217'
 };
 
+// These are mock token addresses for demonstration.
+// You should replace them with the actual addresses of the tokens you want to support.
 export const MOCK_TOKEN_ADDRESSES = {
-  ETH: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
-  DAI: '0x6B175474E89094C44Da98b954EedeAC495271d0F',
-  USDC: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+  ETH: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', // Placeholder for native ETH
+  TOKEN_A: '0xTokenA', // Replace with an actual token address
+  TOKEN_B: '0xTokenB', // Replace with an actual token address
 };

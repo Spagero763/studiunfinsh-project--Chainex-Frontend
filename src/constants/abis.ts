@@ -4,8 +4,8 @@ import membershipAbi from './abis/ChainExMembership.json';
 import tokenAbi from './abis/ChainExToken.json';
 
 export const ChainExABIs = {
-  dexAbi,
-  stakingAbi,
-  membershipAbi,
-  tokenAbi,
+  dexAbi: dexAbi,
+  stakingAbi: stakingAbi,
+  membershipAbi: membershipAbi,
+  tokenAbi: tokenAbi,
 };
