@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Providers } from './providers';
-import { Header } from '~/components/Header';
-import { Toaster } from '~/components/ui/toaster';
-import { cn } from '~/lib/utils';
+import { Header } from '@/components/Header';
+import { Toaster } from '@/components/ui/toaster';
+import { cn } from '@/lib/utils';
 import '@rainbow-me/rainbowkit/styles.css';
 
 export const metadata: Metadata = {
