@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Providers } from './providers';
 import Header from '@/components/Header';
 import '@rainbow-me/rainbowkit/styles.css';
+import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
   title: 'ChainEx DEX',
@@ -16,10 +17,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
+      <body className='dark'>
         <Providers>
           <Header />
           <main className="max-w-6xl mx-auto px-4 py-10">{children}</main>
+          <Toaster />
         </Providers>
       </body>
     </html>
