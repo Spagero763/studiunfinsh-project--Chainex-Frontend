@@ -49,6 +49,14 @@ export function TokenSwap() {
 
   const handleSwap = () => {
     if (!amountIn || !tokenIn || !tokenOut) return;
+    if (tokenIn === tokenOut) {
+      toast({
+        title: 'Invalid Swap',
+        description: 'Cannot swap the same token.',
+        variant: 'destructive',
+      });
+      return;
+    }
     writeContract({
       address: ChainExContracts.dex as `0x${string}`,
       abi: ChainExABIs.dexAbi,
